@@ -1,0 +1,68 @@
+div.container
+  h1
+    a(href="https://github.com/higuma/mp3-lame-encoder-js")
+      | Mp3LameEncoder.js
+    |  demo
+  p Audio recording to MPEG-1 Audio Layer III (.mp3) test with Web Audio API
+  hr
+  div.form-horizontal
+    div.form-group
+      label.col-sm-3.control-label Audio input
+      div.col-sm-2 Test tone
+      div.col-sm-3
+        input#test-tone-level(type="range" min="0" max="100" value="0")
+    div.form-group
+      div.col-sm-3
+      div.col-sm-2
+        input#microphone(type="checkbox")
+        |  Microphone
+      div.col-sm-3
+        input#microphone-level.hidden(type="range" min="0" max="100" value="0")
+    br
+    div.form-group
+     label.col-sm-3.control-label Encoding process
+     div.col-sm-9
+      input(type="radio" name="encoding-process" mode="separate", checked)
+      |  Encode with worker after recording (safer)
+    div.form-group
+     div.col-sm-3
+     div.col-sm-9
+      input(type="radio" name="encoding-process" mode="background")
+      |  Encode with worker on recording background (intermediate)
+    div.form-group
+     div.col-sm-3
+     div.col-sm-9
+      input(type="radio" name="encoding-process" mode="direct")
+      |  Encode on recoring directly without worker (risky)
+    br
+    div.form-group
+      label.col-sm-3.control-label Recording buffer size
+      div.col-sm-2
+        input#buffer-size(type="range" min="0" max="6")
+      div#buffer-size-text.col-sm-7
+    div.form-group
+      div.col-sm-3
+      div.col-sm-9.text-warning
+        strong Warning: 
+        span setting size below browser default may fail recording.
+    br
+    div.form-group
+      label.col-sm-3.control-label MP3 bit rate
+      div.col-sm-2
+        input#bit-rate(type="range" min="0" max="9" value="5")
+      div#bit-rate-text.col-sm-7 160kbps
+    br
+    div.form-group
+      div.col-sm-3.control-label
+        span#recording.text-danger.hidden
+          strong RECORDING
+        | &nbsp; 
+        span#time-display 00:00
+      div.col-sm-3
+        button#record.btn.btn-danger RECORD
+        button#cancel.btn.btn-default.hidden CANCEL
+      div.col-sm-6
+        span#date-time.text-info
+  hr
+  h3 Recordings
+  div#recording-list
