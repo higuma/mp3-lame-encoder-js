@@ -1,0 +1,11 @@
+[
+  "_lame_init",
+  "_lame_set_mode",
+  "_lame_set_num_channels",
+  "_lame_set_in_samplerate",
+  "_lame_set_brate",
+  "_lame_init_params",
+  "_lame_encode_buffer_ieee_float",
+  "_lame_encode_flush",
+  "_lame_close"
+]
