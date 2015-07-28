@@ -1,5 +1,5 @@
 (function() {
-  var $bitRate, $bufferSize, $cancel, $dateTime, $encodingProcess, $microphone, $microphoneLevel, $record, $recording, $recordingList, $testToneLevel, $timeDisplay, BIT_RATE, BUFFER_SIZE, URL, audioContext, disableControlsOnRecord, encoder, encodingProcess, iDefBufSz, microphone, microphoneLevel, minSecStr, mixer, processor, saveRecording, startRecording, startRecordingProcess, startTime, stopRecording, stopRecordingProcess, testTone, testToneLevel, updateBufferSizeText, updateDateTime, worker;
+  var $bitRate, $bufferSize, $cancel, $dateTime, $encodingProcess, $microphone, $microphoneLevel, $record, $recording, $recordingList, $testToneLevel, $timeDisplay, BIT_RATE, BUFFER_SIZE, URL, audioContext, defaultBufSz, disableControlsOnRecord, encoder, encodingProcess, iDefBufSz, input, microphone, microphoneLevel, minSecStr, mixer, processor, saveRecording, startRecording, startRecordingProcess, startTime, stopRecording, stopRecordingProcess, testTone, testToneLevel, updateBufferSizeText, updateDateTime, worker;
 
   navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
 
@@ -57,22 +57,48 @@
 
   $bitRate[0].valueAsNumber = 5;
 
+
+  /*
+  test tone (440Hz sine with 2Hz on/off beep)
+  -------------------------------------------
+              ampMod    output
+  osc(sine)-----|>--------|>----->(testTone)
+                ^         ^
+                |(gain)   |(gain)
+                |         |
+  lfo(square)---+        0.5
+   */
+
   testTone = (function() {
-    var lfo, osc, oscMod, output;
+    var ampMod, lfo, osc, output;
     osc = audioContext.createOscillator();
     lfo = audioContext.createOscillator();
     lfo.type = 'square';
     lfo.frequency.value = 2;
-    oscMod = audioContext.createGain();
-    osc.connect(oscMod);
-    lfo.connect(oscMod.gain);
+    ampMod = audioContext.createGain();
+    osc.connect(ampMod);
+    lfo.connect(ampMod.gain);
     output = audioContext.createGain();
     output.gain.value = 0.5;
-    oscMod.connect(output);
+    ampMod.connect(output);
     osc.start();
     lfo.start();
     return output;
   })();
+
+
+  /*
+  master diagram
+  --------------
+                testToneLevel
+  (testTone)----------|>---------+
+                                 |
+                                 v
+                              (mixer)---+--->(input)--->(processor)
+                                 ^      |                    |
+                microphoneLevel  |      |                    v
+  (microphone)--------|>---------+      +------------->(destination)
+   */
 
   testToneLevel = audioContext.createGain();
 
@@ -93,6 +119,12 @@
   microphoneLevel.connect(mixer);
 
   mixer.connect(audioContext.destination);
+
+  input = audioContext.createGain();
+
+  mixer.connect(input);
+
+  processor = void 0;
 
   $testToneLevel.on('input', function() {
     var level;
@@ -128,15 +160,14 @@
     encodingProcess = $(event.target).attr('mode');
   });
 
-  processor = audioContext.createScriptProcessor(null, 2, 2);
-
-  mixer.connect(processor);
-
-  processor.connect(audioContext.destination);
-
   BUFFER_SIZE = [256, 512, 1024, 2048, 4096, 8192, 16384];
 
-  iDefBufSz = BUFFER_SIZE.indexOf(processor.bufferSize);
+  defaultBufSz = (function() {
+    processor = audioContext.createScriptProcessor(void 0, 2, 2);
+    return processor.bufferSize;
+  })();
+
+  iDefBufSz = BUFFER_SIZE.indexOf(defaultBufSz);
 
   $bufferSize[0].valueAsNumber = iDefBufSz;
 
@@ -166,8 +197,7 @@
     var html, time, url;
     time = new Date();
     url = URL.createObjectURL(blob);
-    html = ("<p recording='" + url + "'>") + ("<audio controls src='" + url + "'></audio> &nbsp; ") + ("" + (time.toString()) + " &nbsp; ") + ("<a class='btn btn-default' href='" + url + "' download='recording.mp3'>") + "Save..." + "</a> " + ("<button class='btn btn-danger' recording='" + url + "'>Delete</button>");
-    "</p>";
+    html = ("<p recording='" + url + "'>") + ("<audio controls src='" + url + "'></audio> &nbsp; ") + ("" + (time.toString()) + " &nbsp; ") + ("<a class='btn btn-default' href='" + url + "' download='recording.ogg'>") + "Save..." + "</a> " + ("<button class='btn btn-danger' recording='" + url + "'>Delete</button>") + "</p>";
     $recordingList.prepend($(html));
   };
 
@@ -189,14 +219,9 @@
   startRecordingProcess = function() {
     var bitRate, bufSz;
     bufSz = BUFFER_SIZE[$bufferSize[0].valueAsNumber];
-    if (bufSz !== processor.bufferSize) {
-      mixer.disconnect();
-      mixer.connect(audioContext.destination);
-      processor.disconnect();
-      processor = audioContext.createScriptProcessor(bufSz, 2, 2);
-      mixer.connect(processor);
-      processor.connect(audioContext.destination);
-    }
+    processor = audioContext.createScriptProcessor(bufSz, 2, 2);
+    input.connect(processor);
+    processor.connect(audioContext.destination);
     bitRate = BIT_RATE[$bitRate[0].valueAsNumber];
     if (encodingProcess === 'direct') {
       encoder = new Mp3LameEncoder(audioContext.sampleRate, bitRate);
@@ -216,6 +241,7 @@
         command: 'start',
         process: encodingProcess,
         sampleRate: audioContext.sampleRate,
+        numChannels: 2,
         bitRate: bitRate
       });
       processor.onaudioprocess = function(event) {
@@ -236,7 +262,8 @@
   };
 
   stopRecordingProcess = function(finish) {
-    processor.onaudioprocess = null;
+    input.disconnect();
+    processor.disconnect();
     if (encodingProcess === 'direct') {
       if (finish) {
         saveRecording(encoder.finish());
@@ -271,8 +298,9 @@
     if (microphone == null) {
       $microphone.attr('disabled', disabled);
     }
-    $bufferSize.attr('disabled', disabled);
     $encodingProcess.attr('disabled', disabled);
+    $bufferSize.attr('disabled', disabled);
+    $bitRate.attr('disabled', disabled);
   };
 
   startRecording = function() {
