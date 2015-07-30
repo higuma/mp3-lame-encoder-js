@@ -143,7 +143,8 @@ $bufferSize[0].valueAsNumber = iDefBufSz;   // initialize with browser default
 function updateBufferSizeText() {
   var iBufSz = $bufferSize[0].valueAsNumber,
       text = "" + BUFFER_SIZE[iBufSz];
-  if (iBufSz === iDefBufSz) text += ' (browser default)';
+  if (iBufSz === iDefBufSz)
+    text += ' (browser default)';
   $('#buffer-size-text').html(text);
 }
 
@@ -160,12 +161,11 @@ $bitRate.on('input', function() {
 
 // save/delete recording
 function saveRecording(blob) {
-  var html, time, url;
   var time = new Date(),
       url = URL.createObjectURL(blob),
       html = "<p recording='" + url + "'>" +
              "<audio controls src='" + url + "'></audio> " +
-             time.toString() +
+             time +
              " <a class='btn btn-default' href='" + url +
                   "' download='recording.wav'>" +
              "Save...</a> " +
@@ -182,24 +182,24 @@ $recordingList.on('click', 'button', function(event) {
 });
 
 // recording process
-var worker = new Worker('js/EncoderWorker.js');
+var worker = new Worker('js/EncoderWorker.js'),
     encoder = undefined;        // used on encodingProcess == direct
 
 worker.onmessage = function(event) { saveRecording(event.data.blob); };
 
 function getBuffers(event) {
-  var buffers = []
+  var buffers = [];
   for (var ch = 0; ch < 2; ++ch)
     buffers[ch] = event.inputBuffer.getChannelData(ch);
   return buffers;
 }
 
 function startRecordingProcess() {
-  var bufSz = BUFFER_SIZE[$bufferSize[0].valueAsNumber];
+  var bufSz = BUFFER_SIZE[$bufferSize[0].valueAsNumber],
+      bitRate = BIT_RATE[$bitRate[0].valueAsNumber];
   processor = audioContext.createScriptProcessor(bufSz, 2, 2);
   input.connect(processor);
   processor.connect(audioContext.destination);
-  bitRate = BIT_RATE[$bitRate[0].valueAsNumber];
   if (encodingProcess === 'direct') {
     encoder = new Mp3LameEncoder(audioContext.sampleRate, bitRate);
     processor.onaudioprocess = function(event) {
