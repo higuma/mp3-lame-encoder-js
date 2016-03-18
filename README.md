@@ -12,7 +12,7 @@ It was originally a fork of libmp3lame.js (<https://github.com/akrennmair/libmp3
 
 ## Demo
 
-<http://higuma.github.io/mp3-lame-encoder-js/>
+<https://boo-higuma.ssl-lolipop.jp/gh-pages/mp3-lame-encoder-js/>
 
 ## Library files
 
