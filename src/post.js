@@ -76,5 +76,13 @@
     delete this.srcPtr;
   };
 
+  if (typeof Module.onReady === 'function') {
+    if (Module.calledRun) {
+      Module.onReady(Module);
+    } else {
+      Module.addOnPostRun(Module.onReady);
+    }
+  }
+
   self.Mp3LameEncoder = Encoder;
 })(self);
