@@ -21,6 +21,10 @@ It was originally a fork of libmp3lame.js (<https://github.com/akrennmair/libmp3
 * `Mp3LameEncoder.js`: JavaScript library (uncompressed)
 * `Mp3LameEncoder.min.js`: JavaScript library (minified)
 * `Mp3LameEncoder.min.js.mem`: memory initializer data for Mp3LameEncoder.min.js
+* `Mp3LameEncoder-wasm.js`: JavaScript library WebAssembly version (uncompressed)
+* `Mp3LameEncoder-wasm.min.js`: JavaScript library WebAssembly version (minified)
+* `Mp3LameEncoder-wasm.wasm`: WebAssembly file
+* `Mp3LameEncoder-wasm.min.wasm`: WebAssembly file for the minified Javascript library
 
 ### Using library
 
@@ -127,6 +131,31 @@ Cancel encoding and clear all internal data.
     * (none)
 
 You should call `.cancel()` manually to avoid resource leak when recording is canceled (encoder's internal memory is not deallocated by unbinding an object variable).
+
+## WebAssembly
+
+The WebAssembly version has identical API, but a slightly differnt way to initialize:
+
+```html
+
+<script type="text/javascript">
+  Mp3LameEncoderConfig = {
+    // by default it will look for the binary file at the same level as this html,
+    // so if you put it somewhere else, this setting must be set
+    wasmBinaryFile: '/some/url/Mp3LameEncoder-wasm.wasm',
+
+    // the binary file is loaded asynchronously, thus Mp3LameEncoder will only be available
+    // after it's fully loaded
+    onReady: function() {
+        var encoder = new Mp3LameEncoder(44100, 320);
+        // ...
+    },
+  };
+</script>
+
+<!-- Use the -wasm version instead -->
+<script src="Mp3LameEncoder-wasm.js"></script>
+```
 
 ## Build
 

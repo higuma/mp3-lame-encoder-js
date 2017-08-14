@@ -30,7 +30,6 @@ EMCC_COMPILE_OPTIONS = [
 
 EMCC_LINK_OPTIONS = [
   '-s ALLOW_MEMORY_GROWTH=0',
-  '-s ASM_JS=1',
   '-s EXPORTED_FUNCTIONS=@src/exports.json',
   '--pre-js src/pre.js',
   '--post-js src/post.js'
@@ -89,8 +88,10 @@ end
 task build_lib: [:compile_lame] do
   FileUtils.makedirs 'lib'
   sources = LIBMP3LAME_OUTPUTS.join ' '
-  sh "emcc -O1 #{EMCC_LINK_OPTIONS} -o lib/Mp3LameEncoder.js #{sources}"
-  sh "emcc -O3 #{EMCC_LINK_OPTIONS} -o lib/Mp3LameEncoder.min.js #{sources}"
+  sh "emcc -O1 #{EMCC_LINK_OPTIONS} -s ASM_JS=1 -o lib/Mp3LameEncoder.js #{sources}"
+  sh "emcc -O3 #{EMCC_LINK_OPTIONS} -s ASM_JS=1 -o lib/Mp3LameEncoder.min.js #{sources}"
+  sh "emcc -O1 #{EMCC_LINK_OPTIONS} -s WASM=1 -o lib/Mp3LameEncoder-wasm.js #{sources}"
+  sh "emcc -O3 #{EMCC_LINK_OPTIONS} -s WASM=1 -o lib/Mp3LameEncoder-wasm.min.js #{sources}"
 end
 
 task :libclean do
